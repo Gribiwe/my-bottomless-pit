@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>何日本語でですか</title>
+    <script src="https://code.jquery.com/jquery-3.3.1.js"
+            integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+            crossorigin="anonymous"></script>
+</head>
+<body>
+    <div id="body">
+        <h1>Здравствуйте, Вы хотите войти как:</h1>
+        <input class="enterButton" type="button" id="userEnterButton" value="Пользователь" onclick="goUser()">
+        <input class="enterButton" type="button" id="adminEnterButton" value="Администратор" onclick="goAdmin()"><br>
+    </div>
+
+    <style>
+        .upAll{
+            position: fixed;
+            border: 3px solid black;
+            z-index: 5;
+            background-color: lavender;
+            color: black;
+        }
+
+        h1{
+            font-size: 30px;
+            text-align: center;
+        }
+        .enterButton{
+            position: absolute;
+            font-size: 20px;
+            text-align: center;
+            height: 10%;
+            width: 25%;
+        }
+        #adminEnterButton{
+            left: 20%;
+        }
+        #userEnterButton{
+            left: 55%;
+        }
+        #adminMenu, #userMenu{
+            position: fixed;
+            width: 100%;
+            height: 10%;
+            top: 0%;
+            left: 0%;
+            background-color: azure;
+        }
+        #adminContent, #userContent{
+            position: absolute;
+            width: 100%;
+            height: 90%;
+            top: 10%;
+            left: 0%;
+            background-color: lavender;
+        }
+        li{
+            float: left;
+        }
+        ul{
+            float: left;
+            align-items: center;
+        }
+        table{
+            width: 100%;
+        }
+        .categoryRow, .producerRow, .productRow{
+            width: 100%;
+            height: 6%;
+            font-size: 18px;
+        }
+        .categoryID, .producerID, .productID{
+            left: 5%;
+            width: 5%;
+        }
+        .categoryName, .producerName{
+            width: 70%;
+            height: 5%;
+        }
+        .editCategoryButton, .editProducerButton, .editProductButton{
+            font-size: 8px;
+            width: 40%;
+            height: 5%;
+        }
+        .saveCategoryButton, .saveProducerButton, .saveProductButton{
+            font-size: 8px;
+            width: 40%;
+            height: 5%;
+        }
+        .deleteCategoryButton, .deleteProducerButton, .deleteProductButton{
+            font-size: 8px;
+            width: 40%;
+            height: 5%;
+        }
+        .categoryNameField, .producerNameField{
+            border: none;
+            background-color: lavender;
+        }
+        .newProductName, .productName{
+             width: 15%;
+             font-size: 13px;
+         }
+        .newProductCategory, .productCategory{
+            width: 15%;
+            font-size: 13px;
+        }
+        .newProductProducer, .productProducer{
+            width: 15%;
+            font-size: 13px;
+        }
+        .newProductOpt, .productOpt{
+            width: 7%;
+            font-size: 13px;
+        }
+        .newProductRoz, .productRoz{
+            width: 7%;
+            font-size: 13px;
+        }
+        .newProductAmountOpt, .productAmountOpt, .productAmount{
+            width: 7%;
+            font-size: 13px;
+        }
+        .newProductButton, .addCategoryButton, .addProducerButton{
+            width: 20%;
+            font-size: 13px;
+        }
+        .productNameField{
+            font-size: 13px;
+            width: 100%;
+            height: 5%;
+        }
+        .productCategoryField{
+            font-size: 13px;
+            width: 100%;
+            height: 5%;
+        }
+        .productProducerField{
+            font-size: 13px;
+            width: 100%;
+            height: 5%;
+        }
+        .productOptField{
+            font-size: 13px;
+            width: 100%;
+            height: 5%;
+        }
+        .productRozField{
+            font-size: 13px;
+            width: 100%;
+            height: 5%;
+        }
+        .productAmountOptField{
+            font-size: 13px;
+            width: 100%;
+            height: 5%;
+        }
+        :disabled{
+            color: black;
+            border: none;
+            background-color: lavender;
+        }
+        button:disabled{
+            background-color: gray !important;
+        }
+        .filterMinPrice, .filterMaxPrice{
+            width: 5%;
+        }
+
+    </style>
+
+    <script>
+        var newCategoryInput;
+        var newProducerInput;
+
+        var newProductNameInput;
+        var newProductCategoryInput;
+        var newProductProducerInput;
+        var newProductOptInput;
+        var newProductRozInput;
+        var newProductAmountOptInput;
+
+        var filterCategory;
+        var filterProducer;
+        var filterMinPrice;
+        var filterMaxPrice;
+        var filterIsOptPrice;
+        var filterSortBy;
+        var filterAccept;
+
+        var body = document.getElementById("body");
+        var contentDiv;
+
+        var productsBuf;
+
+
+        function productBuy(button) {
+            console.log(productsBuf)
+            console.log(button.unicNum)
+            var amountleft = -1;
+            for (var i = 0; i< productsBuf.length; i++) {
+                if (productsBuf[i].id == button.unicNum) {
+                    amountleft = productsBuf[i].amount;
+                }
+            }
+
+            var wtb = prompt('Сколько Вы хотите купить? на данный момент на складе: '+amountleft);
+            if (wtb <= amountleft) {
+                $.ajax({
+                    url: "/dbcursach/sclad",
+                    type: "DELETE",
+                    data: JSON.stringify({
+                        id: button.unicNum,
+                        amount: wtb
+                    }),
+                    success: function () {
+                        searchProducts();
+                    }
+                })
+                ;
+            } else {
+                alert("Вы не можете купить больше, чем есть на складе!")
+            }
+
+
+        }
+        function loadFoundedProducts(result) {
+            clearContent();
+            var productTable = document.createElement("table");
+            var headRow = document.createElement("tr");
+            var headID = document.createElement("td");
+            var headName = document.createElement("td");
+            var headCategory = document.createElement("td");
+            var headProducer = document.createElement("td");
+            var headOpt = document.createElement("td");
+            var headRoz = document.createElement("td");
+            var headAmountOpt = document.createElement("td");
+
+            var headIDText = document.createTextNode("Номер");
+            var headNameText = document.createTextNode("Товар");
+            var headCategoryText = document.createTextNode("Категория");
+            var headProducerText = document.createTextNode("Производитель");
+            var headOptText = document.createTextNode("Опт. цена");
+            var headRozText = document.createTextNode("Роз. цена");
+            var headAmountOptText = document.createTextNode("Со скольки опт");
+
+            headRow.className = "productRow";
+            headID.className = "productID";
+            headName.className = "productName";
+            headCategory.className = "productCategory";
+            headProducer.className = "productProducer";
+            headOpt.className = "productOpt";
+            headRoz.className = "productRoz";
+            headAmountOpt.className = "productAmountOpt";
+
+            headID.appendChild(headIDText);
+            headName.appendChild(headNameText);
+            headCategory.appendChild(headCategoryText);
+            headProducer.appendChild(headProducerText);
+            headOpt.appendChild(headOptText);
+            headRoz.appendChild(headRozText);
+            headAmountOpt.appendChild(headAmountOptText);
+
+            headRow.appendChild(headID);
+            headRow.appendChild(headName);
+            headRow.appendChild(headCategory);
+            headRow.appendChild(headProducer);
+            headRow.appendChild(headOpt);
+            headRow.appendChild(headRoz);
+            headRow.appendChild(headAmountOpt);
+
+            productTable.appendChild(headRow);
+
+            contentDiv.appendChild(productTable);
+
+            var br = document.createElement("br");
+            for(var i =0; i<result.length; i++) {
+                var productRow = document.createElement("tr");
+
+                var productID = document.createElement("td");
+                var productName = document.createElement("td");
+                var productCategory = document.createElement("td");
+                var productProducer = document.createElement("td");
+                var productOpt = document.createElement("td");
+                var productRoz = document.createElement("td");
+                var productAmountOpt = document.createElement("td");
+                var productButtons = document.createElement("td");
+
+                var productNameField = document.createElement("input");
+                var productCategoryField = document.createElement("input");
+                var productProducerField = document.createElement("input");
+                var productOptField = document.createElement("input");
+                var productRozField = document.createElement("input");
+                var productAmountOptField = document.createElement("input");
+                var buyButton = document.createElement("input");
+
+                productNameField.setAttribute("type", "text");
+                productCategoryField.setAttribute("type", "text");
+                productProducerField.setAttribute("type", "text");
+                productOptField.setAttribute("type", "number");
+                productRozField.setAttribute("type", "number");
+                productAmountOptField.setAttribute("type", "number");
+                buyButton.setAttribute("type", "button");
+
+                productNameField.disabled = true;
+                productCategoryField.disabled = true;
+                productProducerField.disabled = true;
+                productOptField.disabled = true;
+                productRozField.disabled = true;
+                productAmountOptField.disabled = true;
+
+                var productIDText = document.createTextNode(result[i].id);
+
+                productNameField.value = result[i].name;
+                productCategoryField.value = result[i].category;
+                productProducerField.value = result[i].producer;
+                productOptField.value = result[i].opt;
+                productRozField.value = result[i].roz;
+                productAmountOptField.value = result[i].amountOpt;
+
+                productNameField.className = "productNameField";
+                productCategoryField.className = "productCategoryField";
+                productProducerField.className = "productProducerField";
+                productOptField.className = "productOptField";
+                productRozField.className = "productRozField";
+                productAmountOptField.className = "productAmountOptField";
+
+                productRow.className = "producerRow";
+
+                productID.className = "productID";
+                productName.className = "productName";
+                productCategory.className = "productCategory";
+                productProducer.className = "productProducer";
+                productOpt.className = "productOpt";
+                productRoz.className = "productRoz";
+                productAmountOpt.className = "productAmountOpt";
+
+                buyButton.className = "buyProductButton";
+
+                productID.appendChild(productIDText);
+                productName.appendChild(productNameField);
+                productCategory.appendChild(productCategoryField);
+                productProducer.appendChild(productProducerField);
+                productOpt.appendChild(productOptField);
+                productRoz.appendChild(productRozField);
+                productAmountOpt.appendChild(productAmountOptField);
+
+                buyButton.value = "Купить";
+
+                productRow.id = "row"+result[i].id;
+                productNameField.id = "pNameF"+result[i].id;
+                productCategoryField.id = "pCAteF"+result[i].id;
+                productProducerField.id = "pProdF"+result[i].id;
+                productOptField.id = "pOptF"+result[i].id;
+                productRozField.id = "pRozF"+result[i].id;
+                productAmountOptField.id = "pAmOptF"+result[i].id;
+
+                buyButton.unicNum = result[i].id;
+
+                buyButton.setAttribute("onClick", "productBuy(this)");
+
+                productButtons.appendChild(buyButton);
+
+                productRow.appendChild(productID);
+                productRow.appendChild(productName);
+                productRow.appendChild(productCategory);
+                productRow.appendChild(productProducer);
+                productRow.appendChild(productOpt);
+                productRow.appendChild(productRoz);
+                productRow.appendChild(productAmountOpt);
+                productRow.appendChild(productButtons);
+
+                productTable.appendChild(productRow);
+            }
+
+
+
+        }
+        function searchProducts() {
+            $.ajax({
+                url: "/dbcursach/product",
+                type: "OPTIONS",
+                data: JSON.stringify({
+                    filterCategory: filterCategory.options[filterCategory.selectedIndex].value,
+                    filterProducer: filterProducer.options[filterProducer.selectedIndex].value,
+                    filterMinPrice: filterMinPrice.value,
+                    filterMaxPrice: filterMaxPrice.value,
+                    filterIsOptPrice: filterIsOptPrice.checked,
+                    filterSortBy: filterSortBy.options[filterSortBy.selectedIndex].value
+                }),
+                success: function (result) {
+                    productsBuf = result;
+                    loadFoundedProducts(result);
+                }
+            })
+            ;
+        }
+        function loadOffersContent() {
+            clearContent();
+        }
+
+        function addToSclad() {
+            var sel = document.getElementById("addProductSelect");
+            var num = document.getElementById("addProductNumber");
+
+            $.ajax({
+                url: "/dbcursach/sclad",
+                type: "PUT",
+                data:
+                    JSON.stringify({
+                        id: sel.options[sel.selectedIndex].value,
+                        amount: num.value
+                    }),
+                success: function(result) {
+                    loadScladContent();
+                }
+            });
+        }
+
+        function removeFromSclad() {
+            var sel = document.getElementById("removeProductSelect");
+            var num = document.getElementById("removeProductNumber");
+
+            $.ajax({
+                url: "/dbcursach/sclad",
+                type: "DELETE",
+                data:
+                    JSON.stringify({
+                        id: sel.options[sel.selectedIndex].value,
+                        amount: num.value
+                    }),
+                success: function(result) {
+                    loadScladContent();
+                }
+            });
+        }
+        function loadProductsTo(select) {
+            $.ajax({
+                url: "/dbcursach/product",
+                type: "GET",
+                success: function(result) {
+                    for(var i =0; i<result.length; i++) {
+                        var newProductOption = document.createElement("option");
+                        newProductOption.value = result[i].id;
+                        var newProductOptionName = document.createTextNode("("+result[i].amount+" шт.) "+result[i].name);
+                        newProductOption.appendChild(newProductOptionName);
+                        select.appendChild(newProductOption)
+                    }
+                }
+            });
+        }
+        function loadScladContent() {
+            clearContent();
+            var br = document.createElement("br");
+            var br2 = document.createElement("br");
+            var br3 = document.createElement("br");
+            var br4 = document.createElement("br");
+            var ulContent = document.createElement("ul");
+            var liAddContent = document.createElement("li");
+            var liRemoveContent  = document.createElement("li");
+
+            var addContentText = document.createTextNode("Добавить товары\n");
+            var removeContentText = document.createTextNode("Удалить товары\n");
+
+            var addProductSelect = document.createElement("select");
+            addProductSelect.id = "addProductSelect";
+            loadProductsTo(addProductSelect);
+            var removeProductSelect = document.createElement("select");
+            removeProductSelect.id = "removeProductSelect";
+            loadProductsTo(removeProductSelect);
+
+            var addProductNumber = document.createElement("input");
+            addProductNumber.id = "addProductNumber";
+            var removeProductNumber = document.createElement("input");
+            removeProductNumber.id = "removeProductNumber";
+
+            addProductNumber.setAttribute("type", "number");
+            removeProductNumber.setAttribute("type", "number");
+            addProductNumber.setAttribute("min", "0");
+            removeProductNumber.setAttribute("min", "0");
+            addProductNumber.className = "productAmount";
+            removeProductNumber.className = "productAmount";
+
+            var addProductButton = document.createElement("input");
+            var removeProductButton = document.createElement("input");
+
+            addProductButton.setAttribute("type", "button");
+            removeProductButton.setAttribute("type", "button");
+            addProductButton.setAttribute("onClick", "addToSclad()");
+            removeProductButton.setAttribute("onClick", "removeFromSclad()");
+            addProductButton.value = "Добавить";
+            removeProductButton.value = "Удалить";
+
+            liAddContent.appendChild(addContentText);
+            liAddContent.appendChild(addProductSelect);
+            liAddContent.appendChild(addProductNumber);
+            liAddContent.appendChild(addProductButton);
+            liAddContent.appendChild(br2);
+
+            liRemoveContent.appendChild(removeContentText);
+            liRemoveContent.appendChild(removeProductSelect);
+            liRemoveContent.appendChild(removeProductNumber);
+            liRemoveContent.appendChild(removeProductButton);
+            liRemoveContent.appendChild(br4);
+
+            ulContent.appendChild(liAddContent);
+            ulContent.appendChild(liRemoveContent);
+
+            contentDiv.appendChild(ulContent);
+
+        }
+        
+        function productEditMode(button) {
+            var productNameField = document.getElementById("pNameF"+button.unicNum);
+            var productCategoryField = document.getElementById("pCAteF"+button.unicNum);
+            var productProducerField = document.getElementById("pProdF"+button.unicNum);
+            var productCategorySelect = document.createElement("select");
+            var productProducerSelect = document.createElement("select");
+            var productOptField = document.getElementById("pOptF"+button.unicNum);
+            var productRozField = document.getElementById("pRozF"+button.unicNum);
+            var productAmountToOptField = document.getElementById("pAmOptF"+button.unicNum);
+
+
+
+            loadCategoriesTo(productCategorySelect);
+            loadProducersTo(productProducerSelect);
+
+            productCategorySelect.className = productCategoryField.className;
+            productProducerSelect.className = productProducerField.className;
+
+            productCategoryField.parentNode.replaceChild(productCategorySelect, productCategoryField);
+            productProducerField.parentNode.replaceChild(productProducerSelect, productProducerField);
+
+            productCategorySelect.id = "pCateS"+button.unicNum;
+            productProducerSelect. id = "pProdS"+button.unicNum;
+
+            productNameField.disabled = false;
+            productCategoryField.disabled = false;
+            productProducerField.disabled = false;
+            productOptField.disabled = false;
+            productRozField.disabled = false;
+            productAmountToOptField.disabled = false;
+
+            button.className = "saveProductButton";
+            button.value = "Сохранить";
+            $(function(){
+                $("input.editProductButton").attr("disabled", true);
+                $("input.deleteProductButton").attr("disabled", true);
+            });
+            button.setAttribute("onClick", "productEditModeOFF(this)");
+        }
+        function productEditModeOFF(button) {
+            var productNameField = document.getElementById("pNameF"+button.unicNum);
+            var productCategoryField = document.getElementById("pCateS"+button.unicNum);
+            var productProducerField = document.getElementById("pProdS"+button.unicNum);
+            var productOptField = document.getElementById("pOptF"+button.unicNum);
+            var productRozField = document.getElementById("pRozF"+button.unicNum);
+            var productAmountToOptField = document.getElementById("pAmOptF"+button.unicNum);
+
+            $.ajax({
+                url: "/dbcursach/product",
+                type: "POST",
+                data:
+                    JSON.stringify({
+                        id: button.unicNum,
+                        name: productNameField.value,
+                        categoryID: productCategoryField.options[productCategoryField.selectedIndex].value,
+                        producerID: productProducerField.options[productProducerField.selectedIndex].value,
+                        opt: productOptField.value,
+                        roz: productRozField.value,
+                        amountToOpt: productAmountToOptField.value
+                    }),
+                success: function(result) {
+                    console.log("done");
+                    loadProductsContent();
+                }
+            });
+        }
+        function deleteProduct(button) {
+            $.ajax({
+                url: "/dbcursach/product",
+                type: "DELETE",
+                data:
+                    JSON.stringify({
+                        id: button.unicNum
+                    }),
+                success: function(result) {
+                    loadProductsContent();
+                }
+            });
+        }
+        function addNewProduct() {
+            $.ajax({
+                url: "/dbcursach/product",
+                type: "PUT",
+                data:
+                    JSON.stringify({
+                        name: newProductNameInput.value,
+                        category: newProductCategoryInput.options[newProductCategoryInput.selectedIndex].value,
+                        producer: newProductProducerInput.options[newProductProducerInput.selectedIndex].value,
+                        opt: newProductOptInput.value,
+                        roz: newProductRozInput.value,
+                        amountToOpt: newProductAmountOptInput.value
+                    }),
+                success: function(result) {
+                    console.log("done");
+                    loadProductsContent();
+                }
+            });
+        }
+        function loadProducersTo(select) {
+            $.ajax({
+                url: "/dbcursach/producer",
+                type: "GET",
+                success: function(result) {
+                    for(var i =0; i<result.length; i++) {
+                        var newProducerOption = document.createElement("option");
+                        newProducerOption.value = result[i].id;
+                        var newProducerOptionName = document.createTextNode(result[i].name);
+                        newProducerOption.appendChild(newProducerOptionName);
+                        select.appendChild(newProducerOption)
+                    }
+                }
+            });
+        }
+        function loadCategoriesTo(select) {
+            $.ajax({
+                url: "/dbcursach/category",
+                type: "GET",
+                success: function(result) {
+                    for(var i =0; i<result.length; i++) {
+                        var newCategoryOption = document.createElement("option");
+                        newCategoryOption.value = result[i].id;
+                        var newCategoryOptionName = document.createTextNode(result[i].name);
+                        newCategoryOption.appendChild(newCategoryOptionName);
+                        select.appendChild(newCategoryOption);
+                    }
+                }
+            });
+        }
+        function loadProductsContent() {
+            clearContent();
+            newProductNameInput = document.createElement("input");
+            newProductCategoryInput = document.createElement("select");
+            newProductProducerInput = document.createElement("select");
+            newProductOptInput = document.createElement("input");
+            newProductRozInput = document.createElement("input");
+            newProductAmountOptInput = document.createElement("input");
+            var addButton = document.createElement("input");
+
+            newProductNameInput.setAttribute("type", "text");
+            newProductOptInput.setAttribute("type", "number");
+            newProductRozInput.setAttribute("type", "number");
+            newProductAmountOptInput.setAttribute("type", "number");
+            addButton.setAttribute("type", "button");
+
+            newProductNameInput.setAttribute("placeholder", "Имя продукта");
+            newProductCategoryInput.setAttribute("placeholder", "Категория");
+            newProductProducerInput.setAttribute("placeholder", "Производитель");
+            newProductOptInput.setAttribute("placeholder", "Опт.цена");
+            newProductRozInput.setAttribute("placeholder", "Роз.цена");
+            newProductAmountOptInput.setAttribute("placeholder", "Штук для опт");
+
+            newProductNameInput.className = "newProductName";
+            newProductCategoryInput.className = "newProductCategory";
+            newProductProducerInput.className = "newProductProducer";
+            newProductOptInput.className = "newProductOpt";
+            newProductRozInput.className = "newProductRoz";
+            newProductAmountOptInput.className = "newProductAmountOpt";
+            addButton.className = "newProductButton";
+
+            addButton.setAttribute("onClick", "addNewProduct()");
+            addButton.value = "Добавить новый товар";
+
+            var br = document.createElement("br");
+
+            loadProducersTo(newProductProducerInput);
+            loadCategoriesTo(newProductCategoryInput);
+
+            contentDiv.appendChild(newProductNameInput);
+            contentDiv.appendChild(newProductCategoryInput);
+            contentDiv.appendChild(newProductProducerInput);
+            contentDiv.appendChild(newProductOptInput);
+            contentDiv.appendChild(newProductRozInput);
+            contentDiv.appendChild(newProductAmountOptInput);
+
+            contentDiv.appendChild(addButton);
+            contentDiv.appendChild(br);
+
+            var productTable = document.createElement("table");
+            var headRow = document.createElement("tr");
+            var headID = document.createElement("td");
+            var headName = document.createElement("td");
+            var headCategory = document.createElement("td");
+            var headProducer = document.createElement("td");
+            var headOpt = document.createElement("td");
+            var headRoz = document.createElement("td");
+            var headAmountOpt = document.createElement("td");
+
+            var headIDText = document.createTextNode("Номер");
+            var headNameText = document.createTextNode("Товар");
+            var headCategoryText = document.createTextNode("Категория");
+            var headProducerText = document.createTextNode("Производитель");
+            var headOptText = document.createTextNode("Опт. цена");
+            var headRozText = document.createTextNode("Роз. цена");
+            var headAmountOptText = document.createTextNode("Со скольки опт");
+
+            headRow.className = "productRow";
+            headID.className = "productID";
+            headName.className = "productName";
+            headCategory.className = "productCategory";
+            headProducer.className = "productProducer";
+            headOpt.className = "productOpt";
+            headRoz.className = "productRoz";
+            headAmountOpt.className = "productAmountOpt";
+
+            headID.appendChild(headIDText);
+            headName.appendChild(headNameText);
+            headCategory.appendChild(headCategoryText);
+            headProducer.appendChild(headProducerText);
+            headOpt.appendChild(headOptText);
+            headRoz.appendChild(headRozText);
+            headAmountOpt.appendChild(headAmountOptText);
+
+            headRow.appendChild(headID);
+            headRow.appendChild(headName);
+            headRow.appendChild(headCategory);
+            headRow.appendChild(headProducer);
+            headRow.appendChild(headOpt);
+            headRow.appendChild(headRoz);
+            headRow.appendChild(headAmountOpt);
+
+            productTable.appendChild(headRow);
+
+            contentDiv.appendChild(productTable);
+
+            $.ajax({
+                url: "/dbcursach/product",
+                type: "GET",
+                success: function(result) {
+                    var br = document.createElement("br");
+                    for(var i =0; i<result.length; i++) {
+                        var productRow = document.createElement("tr");
+
+                        var productID = document.createElement("td");
+                        var productName = document.createElement("td");
+                        var productCategory = document.createElement("td");
+                        var productProducer = document.createElement("td");
+                        var productOpt = document.createElement("td");
+                        var productRoz = document.createElement("td");
+                        var productAmountOpt = document.createElement("td");
+                        var productButtons = document.createElement("td");
+
+                        var productNameField = document.createElement("input");
+                        var productCategoryField = document.createElement("input");
+                        var productProducerField = document.createElement("input");
+                        var productOptField = document.createElement("input");
+                        var productRozField = document.createElement("input");
+                        var productAmountOptField = document.createElement("input");
+                        var editButton = document.createElement("input");
+                        var deleteButton = document.createElement("input");
+
+                        productNameField.setAttribute("type", "text");
+                        productCategoryField.setAttribute("type", "text");
+                        productProducerField.setAttribute("type", "text");
+                        productOptField.setAttribute("type", "number");
+                        productRozField.setAttribute("type", "number");
+                        productAmountOptField.setAttribute("type", "number");
+                        editButton.setAttribute("type", "button");
+                        deleteButton.setAttribute("type", "button");
+
+                        productNameField.disabled = true;
+                        productCategoryField.disabled = true;
+                        productProducerField.disabled = true;
+                        productOptField.disabled = true;
+                        productRozField.disabled = true;
+                        productAmountOptField.disabled = true;
+
+                        var productIDText = document.createTextNode(result[i].id);
+
+                        loadProducersTo(productProducerField);
+                        loadCategoriesTo(productCategoryField);
+
+                        productNameField.value = result[i].name;
+                        productCategoryField.value = result[i].category;
+                        productProducerField.value = result[i].producer;
+                        productOptField.value = result[i].opt;
+                        productRozField.value = result[i].roz;
+                        productAmountOptField.value = result[i].amountOpt;
+
+                        productNameField.className = "productNameField";
+                        productCategoryField.className = "productCategoryField";
+                        productProducerField.className = "productProducerField";
+                        productOptField.className = "productOptField";
+                        productRozField.className = "productRozField";
+                        productAmountOptField.className = "productAmountOptField";
+
+                        productRow.className = "producerRow";
+
+                        productID.className = "productID";
+                        productName.className = "productName";
+                        productCategory.className = "productCategory";
+                        productProducer.className = "productProducer";
+                        productOpt.className = "productOpt";
+                        productRoz.className = "productRoz";
+                        productAmountOpt.className = "productAmountOpt";
+
+                        editButton.className = "editProductButton";
+                        deleteButton.className = "deleteProductButton";
+
+                        productID.appendChild(productIDText);
+                        productName.appendChild(productNameField);
+                        productCategory.appendChild(productCategoryField);
+                        productProducer.appendChild(productProducerField);
+                        productOpt.appendChild(productOptField);
+                        productRoz.appendChild(productRozField);
+                        productAmountOpt.appendChild(productAmountOptField);
+
+                        editButton.value = "Редактировать";
+                        deleteButton.value = "Удалить"
+
+                        productRow.id = "row"+result[i].id;
+                        productNameField.id = "pNameF"+result[i].id;
+                        productCategoryField.id = "pCAteF"+result[i].id;
+                        productProducerField.id = "pProdF"+result[i].id;
+                        productOptField.id = "pOptF"+result[i].id;
+                        productRozField.id = "pRozF"+result[i].id;
+                        productAmountOptField.id = "pAmOptF"+result[i].id;
+
+                        editButton.unicNum = result[i].id;
+                        deleteButton.unicNum = result[i].id;
+
+                        editButton.setAttribute("onClick", "productEditMode(this)");
+                        deleteButton.setAttribute("onClick", "deleteProduct(this)");
+
+                        productButtons.appendChild(deleteButton);
+                        productButtons.appendChild(editButton);
+
+                        productRow.appendChild(productID);
+                        productRow.appendChild(productName);
+                        productRow.appendChild(productCategory);
+                        productRow.appendChild(productProducer);
+                        productRow.appendChild(productOpt);
+                        productRow.appendChild(productRoz);
+                        productRow.appendChild(productAmountOpt);
+                        productRow.appendChild(productButtons);
+
+                        productTable.appendChild(productRow);
+                    }
+                }
+            });
+        }
+
+        function producerEditMode(button) {
+            var field = document.getElementById(button.unicNum);
+            field.className = "nani";
+            field.readOnly = false;
+            button.value = "Сохранить";
+            button.className = "saveProducerButton";
+            $(function(){
+                $("input.editProducerButton").attr("disabled", true);
+                $("input.deleteProducerButton").attr("disabled", true);
+            });
+            button.setAttribute("onClick", "producerEditModeOFF(this)");
+
+        }
+        function producerEditModeOFF(button) { //save
+            console.log("save "+button.unicNum);
+            var field = document.getElementById(button.unicNum);
+
+            $.ajax({
+                url: "/dbcursach/producer",
+                type: "POST",
+                data:
+                    JSON.stringify({
+                        id: button.unicNum,
+                        name: field.value
+                    }),
+                success: function(result) {
+                    console.log("done");
+                    loadProducersContent();
+                }
+            });
+        }
+        function deleteProducer(button) {
+            console.log("delete "+button.unicNum);
+            $.ajax({
+                url: "/dbcursach/producer",
+                type: "DELETE",
+                data:
+                    JSON.stringify({
+                        id: button.unicNum
+                    }),
+                success: function(result) {
+                    console.log("done");
+                    loadProducersContent();
+                }
+            });
+        }
+        function addNewProducer() {
+            $.ajax({
+                url: "/dbcursach/producer",
+                type: "PUT",
+                data:
+                    JSON.stringify({
+                        name: newProducerInput.value
+                    }),
+                success: function(result) {
+                    console.log("done");
+                    loadProducersContent();
+                }
+            });
+        }
+        function loadProducersContent() {
+            clearContent();
+            var createNewProducerField = document.createElement("input");
+            var addButton = document.createElement("input");
+            var br = document.createElement("br");
+            createNewProducerField.setAttribute("type", "text");
+            addButton.setAttribute("type", "button");
+            createNewProducerField.id = "newProducer";
+            newProducerInput = createNewProducerField;
+
+            addButton.className = "addProducerButton";
+            addButton.setAttribute("onClick", "addNewProducer()");
+            addButton.value = "Добавить нового производителя";
+
+            contentDiv.appendChild(createNewProducerField);
+            contentDiv.appendChild(addButton);
+            contentDiv.appendChild(br);
+
+
+            var producerTable = document.createElement("table");
+            var headRow = document.createElement("tr");
+            var headName = document.createElement("td");
+            var headID = document.createElement("td");
+            var headIDText = document.createTextNode("Номер");
+            var headNameText = document.createTextNode("Имя производителя");
+
+            headRow.className = "producerRow";
+            headID.className = "producerID";
+            headName.className = "producerName";
+
+
+            headName.appendChild(headNameText);
+            headID.appendChild(headIDText);
+
+            headRow.appendChild(headID);
+            headRow.appendChild(headName);
+
+            producerTable.appendChild(headRow);
+
+            contentDiv.appendChild(producerTable);
+
+            $.ajax({
+                url: "/dbcursach/producer",
+                type: "GET",
+                success: function(result) {
+                    var br = document.createElement("br");
+                    for(var i =0; i<result.length; i++) {
+                        var producerRow = document.createElement("tr");
+                        var producerName = document.createElement("td");
+                        var producerNameField = document.createElement("input");
+                        var producerID = document.createElement("td");
+                        var producerButtons = document.createElement("td");
+                        var editButton = document.createElement("input");
+                        var deleteButton = document.createElement("input");
+
+                        var producerIDText = document.createTextNode(result[i].id);
+                        editButton.setAttribute("type", "button");
+                        deleteButton.setAttribute("type", "button");
+                        producerNameField.setAttribute("type", "edit");
+                        producerNameField.value = result[i].name;
+                        producerNameField.readOnly = true;
+
+                        producerRow.className = "producerRow";
+                        producerID.className = "producerID";
+                        producerName.className = "producerName";
+                        editButton.className = "editProducerButton";
+                        deleteButton.className = "deleteProducerButton";
+                        producerNameField.className = "producerNameField";
+
+                        producerName.appendChild(producerNameField);
+                        producerID.appendChild(producerIDText);
+                        editButton.value = "Редактировать";
+                        deleteButton.value = "Удалить"
+
+                        producerRow.id = "row"+result[i].id;
+                        producerNameField.id = result[i].id;
+                        editButton.unicNum = result[i].id;
+                        deleteButton.unicNum = result[i].id;
+
+                        editButton.setAttribute("onClick", "producerEditMode(this)");
+                        deleteButton.setAttribute("onClick", "deleteProducer(this)");
+
+                        producerButtons.appendChild(deleteButton);
+                        producerButtons.appendChild(editButton);
+
+                        producerRow.appendChild(producerID);
+                        producerRow.appendChild(producerName);
+                        producerRow.appendChild(producerButtons);
+
+                        producerTable.appendChild(producerRow);
+                    }
+                }
+            });
+        }
+
+        function categoryEditMode(button) {
+            var field = document.getElementById(button.unicNum);
+            field.className = "nani";
+            field.readOnly = false;
+            button.value = "Сохранить";
+            button.className = "saveCategoryButton";
+            $(function(){
+                $("input.editCategoryButton").attr("disabled", true);
+                $("input.deleteCategoryButton").attr("disabled", true);
+            });
+            button.setAttribute("onClick", "categoryEditModeOFF(this)");
+
+        }
+        function categoryEditModeOFF(button) { //save
+            console.log("save "+button.unicNum);
+            var field = document.getElementById(button.unicNum);
+
+            $.ajax({
+                url: "/dbcursach/category",
+                type: "POST",
+                data:
+                    JSON.stringify({
+                        id: button.unicNum,
+                        name: field.value
+                    }),
+                success: function(result) {
+                    console.log("done");
+                    loadCategoriesContent();
+                }
+            });
+        }
+        function deleteCategory(button) {
+            console.log("delete "+button.unicNum);
+            $.ajax({
+                url: "/dbcursach/category",
+                type: "DELETE",
+                data:
+                    JSON.stringify({
+                        id: button.unicNum
+                    }),
+                success: function(result) {
+                    console.log("done");
+                    loadCategoriesContent();
+                }
+            });
+        }
+        function addNewCategory() {
+            $.ajax({
+                url: "/dbcursach/category",
+                type: "PUT",
+                data:
+                    JSON.stringify({
+                        name: newCategoryInput.value
+                    }),
+                success: function(result) {
+                    console.log("done");
+                    loadCategoriesContent();
+                }
+            });
+        }
+        function loadCategoriesContent() {
+            clearContent();
+            var createNewCategoryField = document.createElement("input");
+            var addButton = document.createElement("input");
+            var br = document.createElement("br");
+            createNewCategoryField.setAttribute("type", "text");
+            addButton.setAttribute("type", "button");
+            createNewCategoryField.id = "newCategory";
+            newCategoryInput = createNewCategoryField;
+
+            addButton.className = "addCategoryButton";
+            addButton.setAttribute("onClick", "addNewCategory()");
+            addButton.value = "Создать новую категорию";
+
+            contentDiv.appendChild(createNewCategoryField);
+            contentDiv.appendChild(addButton);
+            contentDiv.appendChild(br);
+
+
+            var categoryTable = document.createElement("table");
+            var headRow = document.createElement("tr");
+            var headName = document.createElement("td");
+            var headID = document.createElement("td");
+            var headIDText = document.createTextNode("Номер");
+            var headNameText = document.createTextNode("Имя категории");
+
+            headRow.className = "categoryRow";
+            headID.className = "categoryID";
+            headName.className = "categoryName";
+
+
+            headName.appendChild(headNameText);
+            headID.appendChild(headIDText);
+
+            headRow.appendChild(headID);
+            headRow.appendChild(headName);
+
+            categoryTable.appendChild(headRow);
+
+            contentDiv.appendChild(categoryTable);
+
+            $.ajax({
+                url: "/dbcursach/category",
+                type: "GET",
+                success: function(result) {
+                    var br = document.createElement("br");
+                    for(var i =0; i<result.length; i++) {
+                        var categoryRow = document.createElement("tr");
+                        var categoryName = document.createElement("td");
+                        var categoryNameField = document.createElement("input");
+                        var categoryID = document.createElement("td");
+                        var categoryButtons = document.createElement("td");
+                        var editButton = document.createElement("input");
+                        var deleteButton = document.createElement("input");
+
+                        var categoryIDText = document.createTextNode(result[i].id);
+                        editButton.setAttribute("type", "button");
+                        deleteButton.setAttribute("type", "button");
+                        categoryNameField.setAttribute("type", "edit");
+                        categoryNameField.value = result[i].name;
+                        categoryNameField.readOnly = true;
+
+                        categoryRow.className = "categoryRow";
+                        categoryID.className = "categoryID";
+                        categoryName.className = "categoryName";
+                        editButton.className = "editCategoryButton";
+                        deleteButton.className = "deleteCategoryButton";
+                        categoryNameField.className = "categoryNameField";
+
+                        categoryName.appendChild(categoryNameField);
+                        categoryID.appendChild(categoryIDText);
+                        editButton.value = "Редактировать";
+                        deleteButton.value = "Удалить"
+
+                        categoryRow.id = "row"+result[i].id;
+                        categoryNameField.id = result[i].id;
+                        editButton.unicNum = result[i].id;
+                        deleteButton.unicNum = result[i].id;
+
+                        editButton.setAttribute("onClick", "categoryEditMode(this)");
+                        deleteButton.setAttribute("onClick", "deleteCategory(this)");
+
+                        categoryButtons.appendChild(deleteButton);
+                        categoryButtons.appendChild(editButton);
+
+                        categoryRow.appendChild(categoryID);
+                        categoryRow.appendChild(categoryName);
+                        categoryRow.appendChild(categoryButtons);
+
+                        categoryTable.appendChild(categoryRow);
+                    }
+                }
+            });
+        }
+
+        function goAdmin() {
+            clearAll();
+            var menu = document.createElement("div");
+            var content = document.createElement("div");
+            menu.id = "adminMenu";
+            content.id = "adminContent";
+
+            var productsMenubutton = document.createElement("input");
+            productsMenubutton.setAttribute("type", "button");
+            productsMenubutton.setAttribute("onClick", "loadProductsContent()");
+            productsMenubutton.value = "Товары"
+            productsMenubutton.id = "productsMenubutton";
+            menu.appendChild(productsMenubutton);
+            var scladMenubutton = document.createElement("input");
+            scladMenubutton.setAttribute("type", "button");
+            scladMenubutton.setAttribute("onClick", "loadScladContent()");
+            scladMenubutton.value = "Склад"
+            scladMenubutton.id = "scladMenubutton";
+            menu.appendChild(scladMenubutton);
+            var categoriesMenubutton = document.createElement("input");
+            categoriesMenubutton.setAttribute("type", "button");
+            categoriesMenubutton.setAttribute("onClick", "loadCategoriesContent()");
+            categoriesMenubutton.value = "Категории"
+            categoriesMenubutton.id = "categoriesMenubutton";
+            menu.appendChild(categoriesMenubutton);
+            var producersMenubutton = document.createElement("input");
+            producersMenubutton.setAttribute("type", "button");
+            producersMenubutton.setAttribute("onClick", "loadProducersContent()");
+            producersMenubutton.value = "Производители"
+            producersMenubutton.id = "producersMenubutton";
+            menu.appendChild(producersMenubutton);
+            contentDiv = content;
+
+            body.appendChild(menu);
+            body.appendChild(content);
+        }
+        function goUser() {
+            clearAll();
+
+            var menu = document.createElement("div");
+            var content = document.createElement("div");
+            menu.id = "userMenu";
+            content.id = "userContent";
+
+            var filterText = document.createTextNode("Фильтр: ");
+            var filterPriceFromText = document.createTextNode(" Цена от ");
+            var filterPriceToText = document.createTextNode(" До ");
+            var filterIsOptText = document.createTextNode(" Применять к цене по опту: ");
+
+            filterCategory = document.createElement("select");
+            filterProducer = document.createElement("select");
+            filterMinPrice = document.createElement("input");
+            filterMaxPrice = document.createElement("input");
+            filterIsOptPrice = document.createElement("input");
+            filterSortBy = document.createElement("select");
+            filterAccept = document.createElement("input");
+
+            var sortByHName = document.createElement("option");
+            var sortByLName = document.createElement("option");
+            var sortByHPrice = document.createElement("option");
+            var sortByLPrice = document.createElement("option");
+            var sortByNon = document.createElement("option");
+
+            var sortByHNameText = document.createTextNode("По имени А-Я");
+            var sortByLNameText = document.createTextNode("По имени Я-А");
+            var sortByHPriceText = document.createTextNode("По уменьшению цены");
+            var sortByLPriceText = document.createTextNode("По увеличению цены");
+            var sortByNonText = document.createTextNode("Не сортировать");
+
+            var anyCategory = document.createElement("option");
+            var anyProducer = document.createElement("option");
+            var anyCategoryText = document.createTextNode("Любая категория");
+            var anyProducerText = document.createTextNode("Любой производитель");
+
+            filterCategory.className = "filterCategory";
+            filterProducer.className = "filterProducer";
+            filterMinPrice.className = "filterMinPrice";
+            filterMaxPrice.className = "filterMaxPrice";
+            filterIsOptPrice.className = "filterIsOptPrice";
+            filterSortBy.className = "filterSortBy";
+            filterAccept.className = "filterAccept";
+
+            anyProducer.appendChild(anyProducerText);
+            anyCategory.appendChild(anyCategoryText);
+
+            anyCategory.value = "0";
+            anyProducer.value = "0";
+
+            filterCategory.appendChild(anyCategory);
+            filterProducer.appendChild(anyProducer);
+
+            sortByHName.appendChild(sortByHNameText);
+            sortByLName.appendChild(sortByLNameText);
+            sortByHPrice.appendChild(sortByHPriceText);
+            sortByLPrice.appendChild(sortByLPriceText);
+            sortByNon.appendChild(sortByNonText);
+
+            sortByNon.value = "sortByNon";
+            sortByHName.value = "sortByHName";
+            sortByLName.value = "sortByLName";
+            sortByHPrice.value = "sortByHPrice";
+            sortByLPrice.value = "sortByLPrice";
+
+
+            loadProducersTo(filterProducer);
+            loadCategoriesTo(filterCategory);
+
+            filterMinPrice.setAttribute("type", "number");
+            filterMaxPrice.setAttribute("type", "number");
+            filterIsOptPrice.setAttribute("type", "checkbox");
+            filterAccept.setAttribute("type", "button");
+            filterAccept.value = "Поиск по фильтру";
+            
+            filterAccept.setAttribute("onClick", "searchProducts()");
+
+            filterMinPrice.setAttribute("min", "0");
+            filterMaxPrice.setAttribute("min", "0");
+            filterMinPrice.value = 0;
+            filterMaxPrice.value = 1000;
+
+            filterSortBy.appendChild(sortByNon);
+            filterSortBy.appendChild(sortByHName);
+            filterSortBy.appendChild(sortByLName);
+            filterSortBy.appendChild(sortByHPrice);
+            filterSortBy.appendChild(sortByLPrice);
+
+
+            contentDiv = content;
+
+            menu.appendChild(filterText);
+            menu.appendChild(filterCategory);
+            menu.appendChild(filterProducer);
+            menu.appendChild(filterPriceFromText);
+            menu.appendChild(filterMinPrice);
+            menu.appendChild(filterPriceToText);
+            menu.appendChild(filterMaxPrice);
+            menu.appendChild(filterIsOptText);
+            menu.appendChild(filterIsOptPrice);
+            menu.appendChild(filterSortBy);
+            menu.appendChild(filterAccept);
+
+            body.appendChild(menu);
+            body.appendChild(content);
+        }
+        function clearAll() {
+            while (body.firstChild) {
+                body.removeChild(body.firstChild);
+            }
+        }
+        function clearContent() {
+            while (contentDiv.firstChild) {
+                contentDiv.removeChild(contentDiv.firstChild);
+            }
+        }
+    </script>
+</body>
+</html>

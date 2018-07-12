@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ЯсамыйКРУТОЙ</title>
+    <link rel="stylesheet" href="../../../../Style.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.js"
+            integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+            crossorigin="anonymous"></script>
+
+</head>
+<body onload="firstLoad()">
+
+    <div id="TODOContainer">
+
+    </div>
+
+    <div id="createTODO">
+        Create new TODO: <input name="newTODO" type="text" id="newTODO">
+        <input type="button" id="saveBut" value="Save">
+
+    </div>
+
+    <style>
+        #d2{
+            width: ;
+            height:;
+            weight
+        }
+    </style>
+
+    <script>
+
+        var container = document.getElementById("TODOContainer");
+
+    function firstLoad() {
+        $.get("http://localhost:9090/KeksSevlet/test", function (data) {
+            loadTODOs(data)
+        });
+    }
+
+    function loadTODOs(data) {
+        while (container.firstChild) {
+            container.removeChild(container.firstChild);
+        }
+        console.log("--------");
+        console.log(data);
+        if(data[0] !== "EMPTY") {
+            for (var i = 0; i < data.length; i++) {
+                var childDiv = document.createElement("div");
+                childDiv.className = "dotoElement";
+                var childLabel = document.createElement("label");
+                var childCHK = document.createElement("input");
+                childCHK.id = data[i].id;
+                childCHK.setAttribute("type", "checkbox");
+                childCHK.setAttribute("onChange", "checkDel(this)")
+                var textNode = document.createTextNode(data[i].name);
+                childLabel.appendChild(textNode);
+                childLabel.setAttribute("for", data[i].id);
+                container.appendChild(childDiv);
+                childDiv.appendChild(childLabel);
+                childDiv.appendChild(childCHK);
+            }
+        }
+    console.log(data)
+    }
+
+    function checkDel(check) {
+
+        jQuery.ajax({
+            url: "http://localhost:9090/KeksSevlet/test",
+            type: "delete",
+            data: JSON.stringify({
+                id: check.id
+            }),
+            success: function (data, status) {
+                check.setAttribute("disabled", "disabled");
+            }
+        });
+    }
+
+    function click() {
+        if (input.value !== "") {
+            $.post("http://localhost:9090/KeksSevlet/test",
+                JSON.stringify({
+                    name: input.value
+                }), function (data, status) {
+                    loadTODOs(data);
+                })
+        } else {
+            $.get("http://localhost:9090/KeksSevlet/test", function (data) {
+                loadTODOs(data)
+            });
+        }
+    }
+
+    var button = document.getElementById("saveBut");
+    var input = document.getElementById("newTODO");
+
+    button.addEventListener("click", click, false);
+
+</script>
+
+</body>
+</html>

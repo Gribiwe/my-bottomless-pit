@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ЯсамыйКРУТОЙ</title>
+    <link rel="stylesheet" href="Style.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.js"
+            integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+            crossorigin="anonymous"></script>
+    <style>
+
+    </style>
+</head>
+<body>
+<div id="bideosik">
+    <video src="BIDEO.mp4" autoplay muted></video>
+</div>
+<div id="boringShit">
+    <form>
+        <label for="USDIn">USD</label>
+        <input type="number" min="0" value="0" id="USDIn" name="USDIn">
+        <label for="UAHafterUSDOut">UAH</label>
+        <input type="number" min="0" value="0" id="UAHafterUSDOut" name="UAHafterUSDOut">
+        <br>
+        <label for="EURIn">EUR</label>
+        <input type="number" min="0" value="0" id="EURIn" name="EURIn">
+        <label for="UAHafterEUROut">UAH</label>
+        <input type="number" min="0" value="0" id="UAHafterEUROut" name="UAHafterEUROut">
+        <br><br>
+        <input type="button" id="convert" name="convertButton" value="Convert your GOLD">
+    </form>
+</div>
+<script>
+    $.get('https://api.privatbank.ua/p24api/pubinfo?exchange&json&coursid=11', function (data) {
+        console.log(data);
+
+        function handl() {
+            var dolToUah = document.getElementById("USDIn").value;
+            var eurToUah = document.getElementById("EURIn").value;
+            document.getElementById("UAHafterUSDOut").setAttribute("value", dolToUah * data[0].buy);
+            document.getElementById("UAHafterEUROut").setAttribute("value", eurToUah * data[1].buy);
+            return;
+        }
+
+        var kek = document.getElementById("convert");
+        kek.addEventListener("click", handl, false);
+
+    });
+</script>
+</body>
+</html>

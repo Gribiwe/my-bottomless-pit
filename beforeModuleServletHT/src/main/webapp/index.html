@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>何日本語でですか</title>
+    <script src="https://code.jquery.com/jquery-3.3.1.js"
+            integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+            crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <style>
+        #ClassInfoContainer{
+            position: absolute;
+            text-align: center;
+            width: 60%;
+            height: 25%;
+            top: 15%;
+            left: 20%;
+            background-color: #7C6A13;
+            font-size: 25px;
+            color: #FFF6CC;
+            padding-top: 15px;
+        }
+        #GetClassDiv{
+            border-bottom: 2px black;
+            border-top: 2px black;
+            position: absolute;
+            top: 40%;
+            left: 20%;
+            width: 60%;
+            height: 25%;
+            background-color: #AA9739;
+            font-size: 30px;
+            color: #FFF6CC;
+            text-align: center;
+        }
+        #GetClass {
+            position: relative;
+            width: 25%;
+            height: 20%;
+            border: 1px black;
+            padding-right: 10px;
+            padding-left: 10px;
+            background-color: #FFF6CC;
+            color: #7C6A13;
+        }
+        #searchBut {
+            position: relative;
+            background-color: #7C6A13;
+            color: #FFF6CC;
+            width: 25%;
+            height: 20%;
+            border: 1px black;
+        }
+
+    </style>
+
+    <div id="ClassInfoContainer">
+        <div id="welcomeDiv">
+            Здравствуйте! <br>
+            Пожалуйста, введите класс, в котором вы заинтересованы.
+        </div>
+    </div>
+
+    <div id="GetClassDiv">
+        <input name="GetClass" type="text" id="GetClass"> <br>
+        <input type="button" id="searchBut" value="Search">
+
+    </div>
+
+    <script>
+        var container = document.getElementById("ClassInfoContainer");
+
+    function loadClass(data) {
+        while (container.firstChild) {
+            container.removeChild(container.firstChild);
+        }
+        console.log("--------");
+        console.log(data);
+
+        if(data!=="NOTFOUND")
+        {
+            var ClassNameDiv = document.createElement("div");
+            var ClassName = document.createTextNode("Класс: "+data.name);
+            ClassNameDiv.appendChild(ClassName);
+            container.appendChild(ClassNameDiv);
+
+            var StudentsAmountDiv = document.createElement("div");
+            var StudentsAmount = document.createTextNode("Студентов: "+data.amount);
+            StudentsAmountDiv.appendChild(StudentsAmount);
+            container.appendChild(StudentsAmountDiv);
+
+            var TeacherDiv = document.createElement("div");
+            var Teacher = document.createTextNode("Учитель: "+data.teacher);
+            TeacherDiv.appendChild(Teacher);
+            container.appendChild(TeacherDiv);
+        } else {
+            var NotFoundDiv = document.createElement("div");
+            var Text = document.createTextNode("Этот класс не найден. Попробуйте еще раз.");
+            NotFoundDiv.appendChild(Text);
+            container.appendChild(NotFoundDiv);
+        }
+    }
+
+    function click() {
+        if (input.value !== "") {
+            $.get("http://localhost:9090/KeksSevlet/test",
+                {name: input.value},
+                function (data) {
+                    loadClass(data);
+                })
+
+        } else {
+            while (container.firstChild) {
+                container.removeChild(container.firstChild);
+            }
+
+            var NotInputDiv = document.createElement("div");
+            NotInputDiv.className = "NotInputDiv";
+            var Text = document.createTextNode("Вы ничего не ввели. Серьезно?");
+            NotInputDiv.appendChild(Text);
+            container.appendChild(NotInputDiv);
+        }
+        input.value = "";
+    }
+
+    var button = document.getElementById("searchBut");
+    var input = document.getElementById("GetClass");
+
+    button.addEventListener("click", click, false);
+
+</script>
+
+</body>
+</html>

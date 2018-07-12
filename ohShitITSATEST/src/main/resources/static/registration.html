@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>registration page</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="javascript" href="js/bootstrap.min.js">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>\
+  <script src="js/registration.js"></script>
+
+      <style>
+       #map {
+        height: 400px;
+        width: 100%;
+       }
+    </style>
+</head>
+<body>
+
+<div class="container" style="margin-top: 20px">
+<a href="index.html"><button type="button" class="btn btn-outline-warning"><img src="images/back.png" style="width: 30px;">
+</button></a>
+  <h2>Registration </h2>
+  <p>Заполните поля</p>
+  <form>
+    <div class="form-group">
+      <label for="usr">NickName</label>
+      <input type="text" class="form-control" id="nick_name" required="type"  pattern=".{5,10}" placeholder="Enter your NickName">
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email:</label>
+      <input type="email" class="form-control" id="email" required="type" pattern=".{5,10}" placeholder="myamazing@gmail.com">
+    </div>
+
+    <div class="form-group">
+      <form>
+      <label for="usr">Password</label>
+      <input type="password" class="form-control" id="password" required="type" pattern=".{5,10}" placeholder="Input password">
+        <input onchange="if ($('#password').get(0).type=='password') $('#password').get(0).type='text'; else $('#password').get(0).type='password';" name="fff" type="checkbox" value="false">
+      </form>
+    </div>
+
+    <div class="form-group">
+      <form>
+      <label for="usr">Repeat password</label>
+      <input type="password" class="form-control" id="repeat_password" required="type" pattern=".{5,10}" placeholder="Repeat password">
+        <input onchange="if ($('#repeat_password').get(0).type=='password') $('#repeat_password').get(0).type='text';
+        else $('#repeat_password').get(0).type='password';" name="fff" type="checkbox" value="false">
+        <span></span>
+      </form>
+    </div>
+
+    <div>
+      <input class="btn btn-lg btn-success btn-block" type="submit" value="Register" onclick="tryToRegistration()">
+    </div>
+
+  </form>
+</div>
+
+
+
+    <!-- <div id="map"></div>
+    <script>
+      function initMap() {
+        var uluru = {lat: -25.363, lng: 131.044};
+        var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 4,
+          center: uluru
+        });
+        var marker = new google.maps.Marker({
+          position: uluru,
+          map: map
+        });
+      }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAhR5oMogud48eXarFugV8jRhLX58xgoCw&callback=initMap">
+    </script> -->
+
+
+</body>
+</html>

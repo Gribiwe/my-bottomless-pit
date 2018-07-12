@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Map</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="javascript" href="js/bootstrap.min.js">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+      <style>
+	      * {
+	      	margin: 0;
+	      	padding: 0;
+	      }
+	      body {
+        	display: flex;
+        	flex-direction: column;
+        	height: 100vh;
+        	box-sizing: border-box;
+        	/*padding: 10px;*/
+          }
+
+	      #map {
+	        height: 100%;
+	      }
+        .widget-mylocation-button .widget-mylocation-cookieless {
+    background-image: url(//maps.gstatic.com/tactile/mylocation/mylocation-sprite-cookieless-v2-1x.png);
+    background-size: 180px 18px;
+}
+
+
+.widget-mylocation-button-icon-common.widget-mylocation-button-normal.widget-mylocation-cookieless {
+}
+    </style>
+
+</head>
+<body onload="get_location">
+    <div>
+      <input class="btn btn-lg btn-success btn-block show_map" id="get_location" type="submit" value="Get my position">
+    </div>
+    <div id="map"></div>
+    <script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAhR5oMogud48eXarFugV8jRhLX58xgoCw&callback=initMaps">
+    </script>
+
+    <script type="text/javascript">
+    	$( document ).ready(function() {
+		   $( "#get_location" ).trigger( "click" );
+		});
+(function($, window, document) {
+    $('#get_location').click( function(e) {
+        e.preventDefault();
+        navigator.geolocation.getCurrentPosition(
+            function( position ){ // все в порядке
+                var lat = position.coords.latitude;
+                var lng = position.coords.longitude;
+                var google_map_pos = new google.maps.LatLng( lat, lng );
+                console.log(lat  + " " + lng + " geometka")
+
+                var uluru = {lat: lat, lng: lng};
+
+        var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 15,
+          center: uluru
+        });
+
+        var myPosition = {
+                person: {
+                  center: {lat: lat, lng: lng},
+                  radius: 10
+                }
+              };
+
+              for(person in myPosition){
+               var personCircle = new google.maps.Circle({
+                    strokeColor: '#311B92',
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillColor: '#673AB7',
+                    fillOpacity: 0.35,
+                    map: map,
+                    center: myPosition[person].center,
+                    radius: Math.sqrt(myPosition[person].radius) * 100
+                  });
+           }
+        var marker = new google.maps.Marker({
+          position: uluru,
+          map: map
+        });
+
+            },
+            function(){ // ошибка
+            }
+        );
+    });
+})(jQuery, window, document);
+
+    </script>
+
+
+</body>
+</html>
